@@ -1,0 +1,6 @@
+Revision history for Perl extension Path::Class::File::Stat.
+
+0.01  Thu Sep 21 13:41:48 2006
+	- original version; created by h2xs 1.23 with options
+		-XA -n Path::Class::File::Stat
+

@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Path-Class-File-Stat.t
+lib/Path/Class/File/Stat.pm
+META.yml                                 Module meta-data (added by MakeMaker)
