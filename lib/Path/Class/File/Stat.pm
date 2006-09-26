@@ -5,8 +5,8 @@ use warnings;
 
 use base qw( Path::Class::File );
 
-our $VERSION = '0.01';
-my $debug = 1;
+our $VERSION = '0.02';
+my $debug = 0;
 
 sub new
 {
@@ -28,7 +28,7 @@ sub changed
        )
     {
         warn "$self is not the file it once was\n" if $debug;
-        return 1;
+        return $self->restat;
     }
     return 0;
 }
@@ -59,8 +59,6 @@ Path::Class::File::Stat - cache and compare stat() calls on a Path::Class::File 
   if ($file->changed)
   {
     # do something provocative
-    # and then re-cache the stat of the file
-    $file->restat;
   }
 
 =head1 DESCRIPTION
@@ -76,17 +74,38 @@ Path::Class::File::Stat implements two new methods for Path::Class::File objects
 
 =head2 changed
 
-Returns true if the object's device number and inode number have changed, or
+Returns the previously cached File::stat object
+if the file's device number and inode number have changed, or
 if the modification time has changed.
+
+Returns 0 (false) otherwise.
+
+While L<File::Modified> uses a MD5 signature of the stat() of a file
+to determine if the file has changed, changed() uses
+a simpler (and probably more naive) algorithm. If you need a more sophisticated 
+way of determining if a file has changed, use
+the restat() method and compare the cached File::stat object it returns with 
+the current File::stat object.
+
+Example of your own changed() logic:
+
+ my $oldstat = $file->restat;
+ my $newstat = $file->stat;
+ # compare $oldstat and $newstat any way you like
+
+Or just use File::Modified instead.
 
 =head2 restat
 
 Re-cache the File::stat object in the Path::Class::File::Stat object. Returns
 the previously cached File::stat object.
 
+The changed() method calls this method internally if changed() is going to return
+true.
+
 =head1 SEE ALSO
 
-L<Path::Class>, L<Path::Class::File>
+L<Path::Class>, L<Path::Class::File>, L<File::Signature>, L<File::Modified>
 
 =head1 AUTHOR
 

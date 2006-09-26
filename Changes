@@ -4,3 +4,8 @@ Revision history for Perl extension Path::Class::File::Stat.
 	- original version; created by h2xs 1.23 with options
 		-XA -n Path::Class::File::Stat
 
+0.02    Fri Sep 22 09:44:36 CDT 2006
+    - turned internal $debug flag off (doh!)
+    - added some POD comparison to File::Modified
+    - changed() now returns old stat() object and restat()'s automatically
+    - fixed SYNOPSIS to reflect new changed() behaviour
