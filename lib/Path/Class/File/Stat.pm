@@ -1,31 +1,45 @@
 package Path::Class::File::Stat;
-
 use strict;
 use warnings;
-
 use base qw( Path::Class::File );
 
-our $VERSION = '0.02';
-my $debug = 0;
+our $VERSION = '0.03';
+my $debug = $ENV{PERL_DEBUG} || 0;
 
-sub new
-{
+sub new {
     my $self = shift->SUPER::new(@_);
     $self->{_stat} = $self->stat;
     return $self;
 }
 
-sub changed
-{
+sub use_md5 {
     my $self = shift;
+    return 1 if exists $self->{_md5};
+    require Digest::MD5;
+    $self->{_md5} = Digest::MD5::md5( $self->slurp );
+    return $self->{_md5};
+}
+
+sub changed {
+    my $self = shift;
+    if ( $self->{_md5} ) {
+        my $old_md5 = $self->{_md5};
+        $self->{_md5} = Digest::MD5::md5( $self->slurp );
+        if ( $old_md5 ne $self->{_md5} ) {
+            return $old_md5;
+        }
+        else {
+            return 0;
+        }
+    }
     my $stat = $self->stat;
 
-    if (
-        (
-         $self->{_stat}->dev ne $stat->dev and $self->{_stat}->ino ne $stat->ino
+    if ((      $self->{_stat}->dev ne $stat->dev
+            && $self->{_stat}->ino ne $stat->ino
         )
-        or $self->{_stat}->mtime ne $stat->mtime
-       )
+        || $self->{_stat}->mtime ne $stat->mtime
+        || $self->{_stat}->size  ne $stat->size
+        )
     {
         warn "$self is not the file it once was\n" if $debug;
         return $self->restat;
@@ -33,8 +47,7 @@ sub changed
     return 0;
 }
 
-sub restat
-{
+sub restat {
     my $self = shift;
     my $old  = $self->{_stat};
     $self->{_stat} = $self->stat;
@@ -70,13 +83,20 @@ handle opened and want to check if the underlying file has changed.
 
 =head1 METHODS
 
-Path::Class::File::Stat implements two new methods for Path::Class::File objects.
+Path::Class::File::Stat extends Path::Class::File objects in the 
+following ways.
+
+=head2 use_md5
+
+Calling this method will attempt to load Digest::MD5 and use that
+instead of stat() for creating file signatures. This is similar
+to how L<File::Modified> works.
 
 =head2 changed
 
 Returns the previously cached File::stat object
 if the file's device number and inode number have changed, or
-if the modification time has changed.
+if the modification time or size has changed.
 
 Returns 0 (false) otherwise.
 
