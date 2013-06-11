@@ -1,22 +1,22 @@
---- #YAML:1.0
-name:               Path-Class-File-Stat
-version:            0.03
-abstract:           cache and compare stat() calls on a Path::Class::File object
+---
+abstract: 'cache and compare stat() calls on a Path::Class::File object'
 author:
-    - Peter Karman <karpet@peknet.com>
-license:            unknown
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
+  - 'Peter Karman <karman@cpan.org>'
 build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Path::Class:  0.15
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.54
+  ExtUtils::MakeMaker: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.130880'
+license: unknown
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Path-Class-File-Stat
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Path::Class: 0.26
+version: 0.04

@@ -3,7 +3,8 @@ use strict;
 use warnings;
 use base qw( Path::Class::File );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
+
 my $debug = $ENV{PERL_DEBUG} || 0;
 
 sub new {
@@ -14,34 +15,42 @@ sub new {
 
 sub use_md5 {
     my $self = shift;
-    return 1 if exists $self->{_md5};
+    if ( exists $self->{_md5} ) {
+        $debug and warn "_md5 exists: $self->{_md5}";
+        return $self->{_md5};
+    }
     require Digest::MD5;
-    $self->{_md5} = Digest::MD5::md5( $self->slurp );
+    $self->{_md5} = Digest::MD5::md5_hex( $self->slurp );
     return $self->{_md5};
 }
 
 sub changed {
     my $self = shift;
-    if ( $self->{_md5} ) {
-        my $old_md5 = $self->{_md5};
-        $self->{_md5} = Digest::MD5::md5( $self->slurp );
-        if ( $old_md5 ne $self->{_md5} ) {
-            return $old_md5;
-        }
-        else {
-            return 0;
-        }
+    my ( $old_sig, $new_sig );
+    if ( exists $self->{_md5} ) {
+        $old_sig = $self->{_md5};
+        $new_sig = Digest::MD5::md5_hex( $self->slurp );
+        $debug and warn "old_sig=$old_sig new_sig=$new_sig";
     }
     my $stat = $self->stat;
+
+    if ($debug) {
+        require Data::Dump;
+        Data::Dump::dump($stat);
+        Data::Dump::dump( $self->{_stat} );
+        Data::Dump::dump($self);
+    }
 
     if ((      $self->{_stat}->dev ne $stat->dev
             && $self->{_stat}->ino ne $stat->ino
         )
         || $self->{_stat}->mtime ne $stat->mtime
         || $self->{_stat}->size  ne $stat->size
+        || ( $old_sig && $new_sig && $old_sig ne $new_sig )
         )
     {
-        warn "$self is not the file it once was\n" if $debug;
+        $debug and warn "$self is not the file it once was\n";
+        $self->{_md5} = $new_sig if $new_sig;
         return $self->restat;
     }
     return 0;
@@ -69,8 +78,7 @@ Path::Class::File::Stat - cache and compare stat() calls on a Path::Class::File 
   # $file has all the magic of Path::Class::File
   
   # sometime later
-  if ($file->changed)
-  {
+  if ($file->changed) {
     # do something provocative
   }
 
@@ -89,14 +97,15 @@ following ways.
 =head2 use_md5
 
 Calling this method will attempt to load Digest::MD5 and use that
-instead of stat() for creating file signatures. This is similar
+in addition to stat() for creating file signatures. This is similar
 to how L<File::Modified> works.
 
 =head2 changed
 
 Returns the previously cached File::stat object
 if the file's device number and inode number have changed, or
-if the modification time or size has changed.
+if the modification time or size has changed, or if use_md5()
+is on, the MD5 signature of the file's contents has changed.
 
 Returns 0 (false) otherwise.
 
