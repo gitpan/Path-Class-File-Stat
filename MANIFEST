@@ -1,8 +1,12 @@
 Changes
+inc/Module/Install.pm
+inc/Module/Install/Base.pm
+inc/Module/Install/Makefile.pm
+inc/Module/Install/MakeMaker.pm
+inc/Module/Install/Metadata.pm
+lib/Path/Class/File/Stat.pm
 Makefile.PL
 MANIFEST
+META.yml
 README
-lib/Path/Class/File/Stat.pm
 t/01-stat.t
-META.yml                                 Module YAML meta-data (added by MakeMaker)
-META.json                                Module JSON meta-data (added by MakeMaker)

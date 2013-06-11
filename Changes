@@ -17,3 +17,5 @@ Revision history for Perl extension Path::Class::File::Stat.
     * refactor to use both md5 *and* stat() call in changed()
     * add actual tests
 
+0.05    11 June 2013
+    * admin release only: move to github, redo Makefile.PL, refactor tests and internals

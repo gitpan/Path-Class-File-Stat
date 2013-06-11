@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use base qw( Path::Class::File );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 my $debug = $ENV{PERL_DEBUG} || 0;
 
@@ -26,31 +26,33 @@ sub use_md5 {
 
 sub changed {
     my $self = shift;
-    my ( $old_sig, $new_sig );
+    my ( $old_sig, $new_sig, $sig_changed, $io_changed, $mtime_changed,
+        $size_changed );
     if ( exists $self->{_md5} ) {
         $old_sig = $self->{_md5};
         $new_sig = Digest::MD5::md5_hex( $self->slurp );
         $debug and warn "old_sig=$old_sig new_sig=$new_sig";
+        $sig_changed = $old_sig ne $new_sig;
     }
-    my $stat = $self->stat;
+    my $new_stat = $self->stat;
+    my $old_stat = $self->{_stat};
+
+    $io_changed = ( $old_stat->dev ne $new_stat->dev
+            && $old_stat->ino ne $new_stat->ino );
+    $mtime_changed = $old_stat->mtime ne $new_stat->mtime;
+    $size_changed  = $old_stat->size ne $new_stat->size;
 
     if ($debug) {
         require Data::Dump;
-        Data::Dump::dump($stat);
-        Data::Dump::dump( $self->{_stat} );
-        Data::Dump::dump($self);
+        Data::Dump::dump($new_stat);
+        Data::Dump::dump($old_stat);
+
+        #Data::Dump::dump($self);
     }
 
-    if ((      $self->{_stat}->dev ne $stat->dev
-            && $self->{_stat}->ino ne $stat->ino
-        )
-        || $self->{_stat}->mtime ne $stat->mtime
-        || $self->{_stat}->size  ne $stat->size
-        || ( $old_sig && $new_sig && $old_sig ne $new_sig )
-        )
-    {
+    if ( $io_changed || $mtime_changed || $size_changed || $sig_changed ) {
         $debug and warn "$self is not the file it once was\n";
-        $self->{_md5} = $new_sig if $new_sig;
+        $self->{_md5} = $new_sig if $sig_changed;
         return $self->restat;
     }
     return 0;
@@ -64,11 +66,12 @@ sub restat {
 }
 
 1;
+
 __END__
 
 =head1 NAME
 
-Path::Class::File::Stat - cache and compare stat() calls on a Path::Class::File object
+Path::Class::File::Stat - test whether the file beneath a Path::Class::File object has changed
 
 =head1 SYNOPSIS
 
@@ -122,12 +125,12 @@ Example of your own changed() logic:
  my $newstat = $file->stat;
  # compare $oldstat and $newstat any way you like
 
-Or just use File::Modified instead.
+Or just use L<File::Modified> instead.
 
 =head2 restat
 
-Re-cache the File::stat object in the Path::Class::File::Stat object. Returns
-the previously cached File::stat object.
+Re-cache the L<File::stat> object in the Path::Class::File::Stat object. Returns
+the previously cached L<File::stat> object.
 
 The changed() method calls this method internally if changed() is going to return
 true.
@@ -142,7 +145,7 @@ Peter Karman, E<lt>karman@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006 by Peter Karman
+Copyright (C) 2006, 2013 by Peter Karman
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
